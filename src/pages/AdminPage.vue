@@ -80,6 +80,43 @@ const onEducationDrop = (e: DragEvent, targetId: string) => {
   cvStore.educations.splice(insertIdx, 0, moved)
 }
 
+// Drag & drop (expériences / experiences)
+const draggingExperienceId = ref<string | null>(null)
+const dragOverExperienceId = ref<string | null>(null)
+
+const onExperienceDragStart = (e: DragEvent, id: string) => {
+  draggingExperienceId.value = id
+  e.dataTransfer?.setData('text/plain', id)
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+
+const onExperienceDragEnd = () => {
+  draggingExperienceId.value = null
+  dragOverExperienceId.value = null
+}
+
+const onExperienceDrop = (e: DragEvent, targetId: string) => {
+  e.preventDefault()
+
+  const draggedId = e.dataTransfer?.getData('text/plain') || draggingExperienceId.value
+  draggingExperienceId.value = null
+  dragOverExperienceId.value = null
+
+  if (!draggedId || draggedId === targetId) return
+
+  const fromIdx = cvStore.experiences.findIndex(xp => xp.id === draggedId)
+  const toIdx = cvStore.experiences.findIndex(xp => xp.id === targetId)
+  if (fromIdx === -1 || toIdx === -1) return
+
+  const movedArr = cvStore.experiences.splice(fromIdx, 1)
+  const moved = movedArr[0]
+  if (!moved) return
+
+  // Si on retire depuis une position avant la cible, la cible décale d'une place.
+  const insertIdx = fromIdx < toIdx ? toIdx - 1 : toIdx
+  cvStore.experiences.splice(insertIdx, 0, moved)
+}
+
 // Tabs
 const tabs = [
   { key: 'person', label: 'Profil', icon: '👤' },
@@ -310,9 +347,28 @@ const exitAdminToHome = () => {
             </button>
           </div>
 
-          <div v-for="exp in cvStore.experiences" :key="exp.id" class="border rounded-lg p-4 bg-slate-50">
+          <div
+            v-for="exp in cvStore.experiences"
+            :key="exp.id"
+            class="border rounded-lg p-4 bg-slate-50"
+            :class="dragOverExperienceId === exp.id ? 'ring-2 ring-blue-400' : ''"
+            @dragover.prevent="dragOverExperienceId = exp.id"
+            @drop="onExperienceDrop($event, exp.id)"
+          >
             <div class="flex justify-between items-start mb-4">
-              <span class="text-lg font-semibold text-slate-700">{{ exp.role }}</span>
+              <div class="flex items-center gap-2">
+                <!-- Poignée de drag (pour ne pas gêner les inputs) -->
+                <span
+                  class="cursor-move text-slate-400 hover:text-slate-600 select-none"
+                  draggable="true"
+                  @dragstart="onExperienceDragStart($event, exp.id)"
+                  @dragend="onExperienceDragEnd"
+                  title="Glisser pour réordonner"
+                >
+                  ⠿
+                </span>
+                <span class="text-lg font-semibold text-slate-700">{{ exp.role }}</span>
+              </div>
               <button @click="removeExperience(exp.id)" class="text-red-500 hover:text-red-700 text-sm">🗑️ Supprimer</button>
             </div>
             

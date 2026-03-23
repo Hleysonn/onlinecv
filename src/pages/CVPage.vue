@@ -167,19 +167,14 @@ const handlePrintAts = async () => {
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(220, 230, 240)
       doc.text(l.label, sideX, ySide)
-      
+
+      // Afficher le niveau en texte (sans barre de progression)
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(8)
       doc.setTextColor(160, 175, 190)
       doc.text(l.level, sideX + 30, ySide)
-      ySide += 4
 
-      // Barre de progression
-      doc.setFillColor(60, 75, 95)
-      doc.roundedRect(sideX, ySide, 52, 3, 1.5, 1.5, 'F')
-      doc.setFillColor(100, 180, 255)
-      doc.roundedRect(sideX, ySide, (l.value / 100) * 52, 3, 1.5, 1.5, 'F')
-      ySide += 7
+      ySide += 4
     })
 
     ySide += 5
@@ -229,14 +224,42 @@ const handlePrintAts = async () => {
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(24, 36, 52)
     doc.text('PROFIL', mainX, yMain)
-    yMain += 7
+    yMain += 5
 
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(70, 85, 100)
     const aboutLinesArr = doc.splitTextToSize(about.value, mainWidth)
     doc.text(aboutLinesArr, mainX, yMain)
-    yMain += aboutLinesArr.length * 5 + 10
+    yMain += aboutLinesArr.length * 5 + 7
+
+    // --- FORMATIONS ---
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(24, 36, 52)
+    doc.text('FORMATIONS', mainX, yMain)
+    yMain += 6
+
+    educations.value.forEach(ed => {
+      doc.setFillColor(80, 200, 120)
+      doc.circle(mainX + 2, yMain - 1, 1.5, 'F')
+
+      doc.setFontSize(10)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(24, 36, 52)
+      doc.text(ed.title, mainX + 7, yMain)
+      yMain += 4
+
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(80, 200, 120)
+      doc.text(ed.period, mainX + 7, yMain)
+      doc.setTextColor(100, 116, 139)
+      doc.text('  |  ' + ed.school, mainX + 7 + doc.getTextWidth(ed.period), yMain)
+      yMain += 6
+    })
+
+    yMain += 5
 
     // --- EXPÉRIENCES ---
     doc.setFontSize(12)
@@ -271,34 +294,6 @@ const handlePrintAts = async () => {
         yMain += lines.length * 4
       })
       yMain += 5
-    })
-
-    yMain += 5
-
-    // --- FORMATIONS ---
-    doc.setFontSize(12)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(24, 36, 52)
-    doc.text('FORMATIONS', mainX, yMain)
-    yMain += 8
-
-    educations.value.forEach(ed => {
-      doc.setFillColor(80, 200, 120)
-      doc.circle(mainX + 2, yMain - 1, 1.5, 'F')
-
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(24, 36, 52)
-      doc.text(ed.title, mainX + 7, yMain)
-      yMain += 5
-
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(80, 200, 120)
-      doc.text(ed.period, mainX + 7, yMain)
-      doc.setTextColor(100, 116, 139)
-      doc.text('  |  ' + ed.school, mainX + 7 + doc.getTextWidth(ed.period), yMain)
-      yMain += 8
     })
 
     yMain += 5
@@ -393,6 +388,28 @@ const handleDownloadAts = async () => {
     doc.text(aboutLinesAts.slice(0, 3), marginLeft, y)
     y += Math.min(aboutLinesAts.length, 3) * 3.5 + 4
 
+    // === FORMATIONS ===
+    sectionTitle('FORMATION')
+
+    educations.value.forEach(ed => {
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(30, 30, 30)
+      doc.text(ed.title, marginLeft, y)
+      
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(100, 100, 100)
+      doc.text(ed.period, pageWidth - marginRight, y, { align: 'right' })
+      y += 3.5
+
+      doc.setFontSize(8)
+      doc.setTextColor(70, 70, 70)
+      doc.text(ed.school, marginLeft, y)
+      y += 4
+    })
+
+    y += 2
+
     // === EXPÉRIENCES ===
     sectionTitle('EXPÉRIENCE PROFESSIONNELLE')
 
@@ -418,28 +435,6 @@ const handleDownloadAts = async () => {
     })
 
     y += 1
-
-    // === FORMATIONS ===
-    sectionTitle('FORMATION')
-
-    educations.value.forEach(ed => {
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(30, 30, 30)
-      doc.text(ed.title, marginLeft, y)
-      
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(100, 100, 100)
-      doc.text(ed.period, pageWidth - marginRight, y, { align: 'right' })
-      y += 3.5
-
-      doc.setFontSize(8)
-      doc.setTextColor(70, 70, 70)
-      doc.text(ed.school, marginLeft, y)
-      y += 4
-    })
-
-    y += 2
 
     // === COMPÉTENCES TECHNIQUES ===
     sectionTitle('COMPÉTENCES TECHNIQUES')
