@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Photo de profil">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="#0b2a3b"/>
+  <circle cx="256" cy="256" r="220" fill="url(#g)"/>
+  <circle cx="256" cy="212" r="72" fill="#ffffff" fill-opacity="0.18"/>
+  <path d="M128 420c22-78 86-120 128-120s106 42 128 120" fill="#ffffff" fill-opacity="0.16"/>
+  <text x="256" y="292" text-anchor="middle" font-family="Montserrat, Arial, sans-serif" font-size="76" font-weight="800" fill="#ffffff" fill-opacity="0.82" letter-spacing="8">
+    FO
+  </text>
+</svg>
+
