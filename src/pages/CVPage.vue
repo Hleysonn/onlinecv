@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { cvStore } from '../stores/cvStore'
+import { cvStore, PROFILES, type Profile } from '../stores/cvStore'
 
 const router = useRouter()
 const photoOk = ref(true)
@@ -18,6 +18,15 @@ const projects = computed(() => cvStore.projects)
 
 const headline = computed(() => `${person.value.firstName} ${person.value.lastName}`)
 const initials = computed(() => `${person.value.firstName[0]}${person.value.lastName[0]}`)
+
+const selectedProfile = ref<Profile>('all')
+
+const getFilteredExperiences = (profile: Profile) =>
+  cvStore.experiences.filter(e => !e.profiles || e.profiles.includes(profile))
+const getFilteredSkillGroups = (profile: Profile) =>
+  cvStore.skillGroups.filter(g => !g.profiles || g.profiles.includes(profile))
+const getFilteredProjects = (profile: Profile) =>
+  cvStore.projects.filter(p => !p.profiles || p.profiles.includes(profile))
 
 // === Système de code secret pour accéder à l'admin ===
 // Hash SHA-256 du code secret (le code en clair n'est pas stocké)
@@ -85,6 +94,9 @@ const logout = () => {
 
 const handlePrintAts = async () => {
   try {
+    const _experiences = getFilteredExperiences(selectedProfile.value)
+    const _skillGroups = getFilteredSkillGroups(selectedProfile.value)
+    const _projects = getFilteredProjects(selectedProfile.value)
     // @ts-ignore
     const { jsPDF } = await import('jspdf')
     
@@ -136,7 +148,7 @@ const handlePrintAts = async () => {
     doc.text('COMPÉTENCES', sideX, ySide)
     ySide += 6
 
-    skillGroups.value.forEach(group => {
+    _skillGroups.forEach(group => {
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(255, 200, 100)
@@ -268,7 +280,7 @@ const handlePrintAts = async () => {
     doc.text('EXPÉRIENCES', mainX, yMain)
     yMain += 8
 
-    experiences.value.forEach(xp => {
+    _experiences.forEach(xp => {
       doc.setFillColor(100, 180, 255)
       doc.circle(mainX + 2, yMain - 1, 1.5, 'F')
 
@@ -305,7 +317,7 @@ const handlePrintAts = async () => {
     doc.text('PROJETS', mainX, yMain)
     yMain += 8
 
-    projects.value.forEach(p => {
+    _projects.forEach(p => {
       doc.setFillColor(160, 100, 220)
       doc.circle(mainX + 2, yMain - 1, 1.5, 'F')
 
@@ -328,8 +340,16 @@ const handlePrintAts = async () => {
     })
 
     const fileName = `${person.value.firstName}_${person.value.lastName}_CV.pdf`
-    doc.save(fileName)
-    
+    const blob = doc.output('blob')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
   } catch (error) {
     console.error('Erreur PDF:', error)
     alert('Erreur: ' + (error as Error).message)
@@ -339,6 +359,9 @@ const handlePrintAts = async () => {
 // Version ATS-friendly
 const handleDownloadAts = async () => {
   try {
+    const _experiences = getFilteredExperiences(selectedProfile.value)
+    const _skillGroups = getFilteredSkillGroups(selectedProfile.value)
+    const _projects = getFilteredProjects(selectedProfile.value)
     // @ts-ignore
     const { jsPDF } = await import('jspdf')
     
@@ -413,7 +436,7 @@ const handleDownloadAts = async () => {
     // === EXPÉRIENCES ===
     sectionTitle('EXPÉRIENCE PROFESSIONNELLE')
 
-    experiences.value.slice(0, 3).forEach(xp => {
+    _experiences.slice(0, 3).forEach(xp => {
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(30, 30, 30)
@@ -440,7 +463,7 @@ const handleDownloadAts = async () => {
     sectionTitle('COMPÉTENCES TECHNIQUES')
 
     doc.setFontSize(8)
-    const allSkills = skillGroups.value.map(g => `${g.label}: ${g.items.join(', ')}`).join('  |  ')
+    const allSkills = _skillGroups.map(g => `${g.label}: ${g.items.join(', ')}`).join('  |  ')
     const skillLines = doc.splitTextToSize(allSkills, contentWidth)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(50, 50, 50)
@@ -465,7 +488,7 @@ const handleDownloadAts = async () => {
     // === PROJETS ===
     sectionTitle('PROJETS')
 
-    projects.value.slice(0, 2).forEach(p => {
+    _projects.slice(0, 2).forEach(p => {
       doc.setFontSize(8)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(30, 30, 30)
@@ -480,8 +503,16 @@ const handleDownloadAts = async () => {
     })
 
     const fileName = `${person.value.firstName}_${person.value.lastName}_CV_ATS.pdf`
-    doc.save(fileName)
-    
+    const blob = doc.output('blob')
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
   } catch (error) {
     console.error('Erreur PDF ATS:', error)
     alert('Erreur: ' + (error as Error).message)
@@ -519,6 +550,18 @@ const handleDownloadAts = async () => {
               <span class="flex items-center gap-2">📍 {{ person.address }}</span>
             </div>
             <div class="flex flex-wrap justify-center md:justify-start gap-3 pt-4 print:hidden">
+              <div class="flex rounded-full overflow-hidden border border-white/30 text-sm font-semibold">
+                <button
+                  v-for="p in PROFILES"
+                  :key="p.key"
+                  type="button"
+                  @click="selectedProfile = p.key"
+                  :class="selectedProfile === p.key ? 'bg-white text-slate-900' : 'text-white hover:bg-white/10'"
+                  class="px-3 py-1.5 transition"
+                >
+                  {{ p.label }}
+                </button>
+              </div>
               <button
                 type="button"
                 class="px-4 py-2 rounded-full bg-white text-slate-900 font-semibold shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 transition"

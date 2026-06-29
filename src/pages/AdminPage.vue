@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { cvStore, resetToDefault, generateId, type Experience, type SkillGroup } from '../stores/cvStore'
+import { cvStore, resetToDefault, generateId, PROFILES, type Profile, type Experience, type SkillGroup } from '../stores/cvStore'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -136,6 +136,7 @@ const addExperience = () => {
     company: 'Entreprise',
     period: '2024',
     details: ['Description'],
+    profiles: ['fullstack', 'dataEngineer', 'all'] as Profile[],
   })
 }
 
@@ -173,6 +174,7 @@ const addSkillGroup = () => {
     label: 'Nouveau groupe',
     color: 'slate',
     items: ['Compétence'],
+    profiles: ['fullstack', 'dataEngineer', 'all'] as Profile[],
   })
 }
 
@@ -221,6 +223,7 @@ const addProject = () => {
     title: 'Nouveau projet',
     desc: 'Description du projet',
     link: 'github.com/...',
+    profiles: ['fullstack', 'dataEngineer', 'all'] as Profile[],
   })
 }
 
@@ -385,6 +388,15 @@ const exitAdminToHome = () => {
                 <label class="block text-sm font-medium text-slate-600 mb-1">Période</label>
                 <input v-model="exp.period" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Ex: 01/2023 – 12/2023" />
               </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-600 mb-2">Profils CV</label>
+                <div class="flex gap-4">
+                  <label v-for="p in PROFILES" :key="p.key" class="flex items-center gap-1.5 text-sm text-slate-700 cursor-pointer">
+                    <input type="checkbox" :value="p.key" v-model="exp.profiles" class="accent-blue-600" />
+                    {{ p.label }}
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -512,6 +524,15 @@ const exitAdminToHome = () => {
                   <option value="red">Rouge</option>
                 </select>
               </div>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-slate-600 mb-2">Profils CV</label>
+                <div class="flex gap-4">
+                  <label v-for="p in PROFILES" :key="p.key" class="flex items-center gap-1.5 text-sm text-slate-700 cursor-pointer">
+                    <input type="checkbox" :value="p.key" v-model="group.profiles" class="accent-blue-600" />
+                    {{ p.label }}
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -617,6 +638,15 @@ const exitAdminToHome = () => {
               <div>
                 <label class="block text-sm font-medium text-slate-600 mb-1">Lien</label>
                 <input v-model="proj.link" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="github.com/..." />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-slate-600 mb-2">Profils CV</label>
+                <div class="flex gap-4">
+                  <label v-for="p in PROFILES" :key="p.key" class="flex items-center gap-1.5 text-sm text-slate-700 cursor-pointer">
+                    <input type="checkbox" :value="p.key" v-model="proj.profiles" class="accent-blue-600" />
+                    {{ p.label }}
+                  </label>
+                </div>
               </div>
             </div>
           </div>

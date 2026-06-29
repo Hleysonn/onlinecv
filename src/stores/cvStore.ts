@@ -1,5 +1,13 @@
 import { reactive, watch } from 'vue'
 
+export type Profile = 'fullstack' | 'dataEngineer' | 'all'
+
+export const PROFILES: { key: Profile; label: string }[] = [
+  { key: 'all', label: 'Généraliste' },
+  { key: 'fullstack', label: 'Full Stack' },
+  { key: 'dataEngineer', label: 'Data Engineer' },
+]
+
 export interface Person {
   firstName: string
   lastName: string
@@ -15,6 +23,7 @@ export interface Experience {
   company: string
   period: string
   details: string[]
+  profiles: Profile[]
 }
 
 export interface Education {
@@ -30,6 +39,7 @@ export interface SkillGroup {
   label: string
   color: string
   items: string[]
+  profiles: Profile[]
 }
 
 export interface Language {
@@ -44,6 +54,7 @@ export interface Project {
   title: string
   desc: string
   link: string
+  profiles: Profile[]
 }
 
 export interface SoftSkill {
@@ -83,6 +94,7 @@ const defaultData: CVData = {
         'Conception et optimisation de bases de données SQL Server',
         'Collaboration avec les équipes métier pour l\'analyse des besoins',
       ],
+      profiles: ['fullstack', 'dataEngineer', 'all'],
     },
     {
       id: '2',
@@ -94,6 +106,7 @@ const defaultData: CVData = {
         'Intégration de designs UI/UX modernes',
         'Mise en place de pipelines CI/CD',
       ],
+      profiles: ['fullstack', 'all'],
     },
     {
       id: '3',
@@ -104,6 +117,7 @@ const defaultData: CVData = {
         'Développement d\'applications mobiles avec Flutter/Dart',
         'Publication sur Google Play Store',
       ],
+      profiles: ['all'],
     },
   ],
   educations: [
@@ -123,11 +137,11 @@ const defaultData: CVData = {
     },
   ],
   skillGroups: [
-    { id: '1', label: 'Back-end', color: 'amber', items: ['C#', '.NET', 'Node.js', 'Express', 'REST API'] },
-    { id: '2', label: 'Front-end', color: 'blue', items: ['React', 'Vue', 'Angular', 'Tailwind', 'Sass', 'HTML', 'CSS', 'JS'] },
-    { id: '3', label: 'Mobile', color: 'emerald', items: ['Dart', 'Flutter'] },
-    { id: '4', label: 'Data / DB', color: 'purple', items: ['MS SQL Server', 'T-SQL', 'PostgreSQL', 'MongoDB'] },
-    { id: '5', label: 'Outils', color: 'slate', items: ['Visual Studio', 'VS Code', 'Android Studio', 'Git'] },
+    { id: '1', label: 'Back-end', color: 'amber', items: ['C#', '.NET', 'Node.js', 'Express', 'REST API'], profiles: ['fullstack', 'all'] },
+    { id: '2', label: 'Front-end', color: 'blue', items: ['React', 'Vue', 'Angular', 'Tailwind', 'Sass', 'HTML', 'CSS', 'JS'], profiles: ['fullstack', 'all'] },
+    { id: '3', label: 'Mobile', color: 'emerald', items: ['Dart', 'Flutter'], profiles: ['all'] },
+    { id: '4', label: 'Data / DB', color: 'purple', items: ['MS SQL Server', 'T-SQL', 'PostgreSQL', 'MongoDB'], profiles: ['dataEngineer', 'all'] },
+    { id: '5', label: 'Outils', color: 'slate', items: ['Visual Studio', 'VS Code', 'Android Studio', 'Git'], profiles: ['fullstack', 'dataEngineer', 'all'] },
   ],
   softSkills: [
     { id: '1', label: 'Travail en équipe' },
@@ -147,12 +161,14 @@ const defaultData: CVData = {
       title: 'Mon CV en ligne',
       desc: 'Site web interactif présentant mon parcours professionnel avec génération PDF.',
       link: 'github.com/franzy/cv',
+      profiles: ['fullstack', 'all'],
     },
     {
       id: '2',
       title: 'App Mobile Flutter',
       desc: 'Application de gestion de tâches avec synchronisation cloud.',
       link: 'github.com/franzy/taskapp',
+      profiles: ['all'],
     },
   ],
 }
@@ -169,13 +185,21 @@ const loadData = (): CVData => {
         ...defaultData,
         ...parsed,
         person: { ...defaultData.person, ...parsed.person },
-        // S'assurer que les tableaux existent
-        experiences: parsed.experiences || defaultData.experiences,
+        experiences: (parsed.experiences || defaultData.experiences).map((e: Experience) => ({
+          ...e,
+          profiles: e.profiles || (['fullstack', 'dataEngineer', 'all'] as Profile[]),
+        })),
         educations: parsed.educations || defaultData.educations,
-        skillGroups: parsed.skillGroups || defaultData.skillGroups,
+        skillGroups: (parsed.skillGroups || defaultData.skillGroups).map((g: SkillGroup) => ({
+          ...g,
+          profiles: g.profiles || (['fullstack', 'dataEngineer', 'all'] as Profile[]),
+        })),
         softSkills: parsed.softSkills || defaultData.softSkills,
         languages: parsed.languages || defaultData.languages,
-        projects: parsed.projects || defaultData.projects,
+        projects: (parsed.projects || defaultData.projects).map((p: Project) => ({
+          ...p,
+          profiles: p.profiles || (['fullstack', 'dataEngineer', 'all'] as Profile[]),
+        })),
       }
     } catch {
       return defaultData
