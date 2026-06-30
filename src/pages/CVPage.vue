@@ -516,6 +516,7 @@ const handleDownloadAts = async () => {
         <a :href="`tel:${person.phone.replace(/\s/g, '')}`" class="sb-contact">{{ person.phone }}</a>
         <a :href="`mailto:${person.email}`" class="sb-contact">{{ person.email }}</a>
         <span class="sb-contact">{{ person.address }}</span>
+        
       </div>
 
       <div class="sb-profiles hi hi--3">
@@ -592,20 +593,6 @@ const handleDownloadAts = async () => {
           <Transition name="profile-swap" mode="out-in">
             <p :key="selectedProfile" class="about">{{ activeAbout }}</p>
           </Transition>
-          <div class="about-meta">
-            <span class="about-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              {{ person.address }}
-            </span>
-            <span class="about-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-              {{ person.email }}
-            </span>
-            <span class="about-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.4 19.79 19.79 0 0 1 1.61 4.84 2 2 0 0 1 3.58 2.69h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.18a16 16 0 0 0 6 6l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.46 17.5z"/></svg>
-              {{ person.phone }}
-            </span>
-          </div>
         </section>
 
         <section v-else-if="activeSection === 'experience'" key="experience" class="section">
@@ -740,6 +727,30 @@ const handleDownloadAts = async () => {
 
       </Transition>
     </main>
+
+    <!-- CONTACT FLOAT -->
+    <div class="contact-float print-hide">
+      <span class="about-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        {{ person.address }}
+      </span>
+      <span class="about-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        {{ person.email }}
+      </span>
+      <span class="about-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.4 19.79 19.79 0 0 1 1.61 4.84 2 2 0 0 1 3.58 2.69h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.18a16 16 0 0 0 6 6l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.46 17.5z"/></svg>
+        {{ person.phone }}
+      </span>
+      <span class="about-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/></svg>
+        <a :href="`https://${person.linkedin}`" target="_blank" class="max-w-[100px] truncate">{{ person.linkedin }}</a>
+      </span>
+      <span class="about-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.295 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        <a :href="`https://${person.github}`" target="_blank" class="max-w-[100px] truncate">{{ person.github }}</a>
+      </span>
+    </div>
   </div>
 </template>
 
@@ -1132,26 +1143,35 @@ a.sb-contact:hover { color: var(--accent-light); }
   box-shadow: 0 4px 24px rgba(15,23,42,0.04);
 }
 
-/* About meta */
-.about-meta {
+/* Contact float */
+.contact-float {
+  position: fixed;
+  bottom: 1.5rem;
+  left: calc(var(--sb-w) + 2rem);
+  right: 2rem;
   display: flex;
-  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.6rem;
-  margin-top: 1.25rem;
+  flex-wrap: wrap;
+  z-index: 5;
+  pointer-events: none;
 }
 
 .about-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   font-weight: 500;
   color: var(--muted);
-  background: var(--surface);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--rule);
   border-radius: 99px;
   padding: 0.35rem 0.9rem;
-  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+  box-shadow: 0 4px 16px rgba(15,23,42,0.08);
+  pointer-events: auto;
 }
 
 .about-badge svg { flex-shrink: 0; color: var(--accent); }
@@ -1507,6 +1527,7 @@ a.sb-contact:hover { color: var(--accent-light); }
 @media (max-width: 900px) {
   .root { display: block; overflow-x: hidden; }
   .sidebar { display: none; }
+  .contact-float { display: none; }
 
   .mob-head {
     display: block;

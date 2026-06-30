@@ -14,7 +14,9 @@ export interface Person {
   title: string
   email: string
   phone: string
+  linkedin: string
   address: string
+  github: string
 }
 
 export interface Experience {
@@ -80,9 +82,11 @@ const defaultData: CVData = {
     firstName: 'Franzy',
     lastName: 'Okagnanga',
     title: 'Développeur Full-Stack',
-    email: 'franzy.music@gmail.com',
+    email: 'franzy.okag@gmail.com',
     phone: '+32 456 19 72 26',
-    address: 'Quaregnon, Belgique',
+    address: 'Dour, Belgique',
+    linkedin: 'www.linkedin.com/in/franzy-mouesset-okagnanga-2377b52ba',
+    github: 'github.com/Hleysonn?tab=repositories',
   },
   about: `Développeur passionné avec une solide expérience en développement web et mobile. Maîtrise des technologies modernes comme Vue, React, Angular côté front-end et C#/.NET, Node.js côté back-end. Capacité à travailler en équipe et à m'adapter rapidement aux nouvelles technologies.`,
   experiences: [
