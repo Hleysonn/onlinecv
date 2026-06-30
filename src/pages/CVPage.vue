@@ -807,6 +807,7 @@ const handleDownloadAts = async () => {
   position: fixed;
   top: 0;
   left: 0;
+  width: var(--sb-w);
   height: 100vh;
   overflow-y: auto;
   padding: 2.5rem 1.75rem;
