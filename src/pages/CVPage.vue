@@ -1381,6 +1381,14 @@ a.sb-contact:hover { color: var(--accent-light); }
   color: var(--accent);
   text-decoration: none;
   transition: gap 0.2s;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.plink span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .plink:hover { gap: 0.55rem; }
