@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@property --rgb-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
 /* Utilitaires légers */
 .card {
   background: white;

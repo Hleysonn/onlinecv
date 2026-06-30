@@ -551,6 +551,7 @@ const handleDownloadAts = async () => {
             <div class="mob-name">{{ person.firstName }} <em>{{ person.lastName }}</em></div>
             <p class="mob-title">{{ activeTitle }}</p>
           </div>
+          <button @click="handlePrintAts" class="mob-cv-btn">↓ CV</button>
         </div>
         <div class="mob-tabs">
           <button
@@ -560,24 +561,21 @@ const handleDownloadAts = async () => {
             @click="selectedProfile = p.key"
           >{{ p.label }}</button>
         </div>
-        <nav class="mob-nav">
-          <button
-            v-for="item in navItems"
-            :key="item.id"
-            :class="['mob-nav-btn', activeSection === item.id && 'mob-nav-btn--on']"
-            @click="scrollTo(item.id)"
-          >{{ item.label }}</button>
-        </nav>
-        <div class="mob-btns">
-          <button @click="handlePrintAts" class="mbn">↓ CV</button>
-          <template v-if="adminUnlocked">
-            <button @click="handleDownloadAts" class="mbn mbn--o">↓ ATS</button>
-            <button @click="goToAdmin" class="mbn mbn--o">⚙</button>
-            <button @click="logout" class="mbn mbn--d">🔒</button>
-          </template>
-        </div>
       </div>
     </header>
+
+    <!-- MOBILE BOTTOM NAV -->
+    <nav class="mob-bottom-nav print-hide">
+      <button
+        v-for="item in navItems"
+        :key="item.id"
+        :class="['mbnav-item', activeSection === item.id && 'mbnav-item--on']"
+        @click="scrollTo(item.id)"
+      >
+        <span class="mbnav-num">{{ item.num }}</span>
+        <span class="mbnav-label">{{ item.label }}</span>
+      </button>
+    </nav>
 
     <!-- CONTENT -->
     <main class="content">
@@ -594,6 +592,20 @@ const handleDownloadAts = async () => {
           <Transition name="profile-swap" mode="out-in">
             <p :key="selectedProfile" class="about">{{ activeAbout }}</p>
           </Transition>
+          <div class="about-meta">
+            <span class="about-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              {{ person.address }}
+            </span>
+            <span class="about-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              {{ person.email }}
+            </span>
+            <span class="about-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.4 19.79 19.79 0 0 1 1.61 4.84 2 2 0 0 1 3.58 2.69h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.18a16 16 0 0 0 6 6l.87-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.46 17.5z"/></svg>
+              {{ person.phone }}
+            </span>
+          </div>
         </section>
 
         <section v-else-if="activeSection === 'experience'" key="experience" class="section">
@@ -833,14 +845,17 @@ const handleDownloadAts = async () => {
 
 .sb-avatar-ring {
   position: relative;
-  width: 72px; height: 72px;
+  width: 96px; height: 96px;
   border-radius: 50%;
   padding: 3px;
-  background: conic-gradient(from 0deg, var(--accent-light), var(--warm), var(--accent-light));
-  animation: spin 8s linear infinite;
+  margin: 0 auto;
+  background: conic-gradient(from var(--rgb-angle, 0deg), #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #8800ff, #ff0000);
+  animation: rgbSpin 4s linear infinite;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes rgbSpin { to { --rgb-angle: 360deg; } }
 
 .sb-avatar {
   width: 100%; height: 100%;
@@ -852,12 +867,12 @@ const handleDownloadAts = async () => {
   font-family: var(--font-display);
   font-size: 1.1rem; font-weight: 800;
   color: var(--accent-light);
-  animation: spin 8s linear infinite reverse;
+  animation: none;
 }
 
 .sb-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-.sb-identity { line-height: 1.15; position: relative; }
+.sb-identity { line-height: 1.15; position: relative; text-align: center; }
 
 .sb-firstname {
   font-family: var(--font-display);
@@ -1049,6 +1064,12 @@ a.sb-contact:hover { color: var(--accent-light); }
   max-width: 920px;
   width: 100%;
   margin: 0 auto;
+  background-image:
+    linear-gradient(rgba(100, 116, 139, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 116, 139, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(100, 116, 139, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 116, 139, 0.18) 1px, transparent 1px);
+  background-size: 8px 8px, 8px 8px, 40px 40px, 40px 40px;
 }
 
 /* ── Sections ── */
@@ -1110,6 +1131,30 @@ a.sb-contact:hover { color: var(--accent-light); }
   border: 1px solid var(--rule);
   box-shadow: 0 4px 24px rgba(15,23,42,0.04);
 }
+
+/* About meta */
+.about-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+.about-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 99px;
+  padding: 0.35rem 0.9rem;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+}
+
+.about-badge svg { flex-shrink: 0; color: var(--accent); }
 
 /* ── Timeline ── */
 .timeline {
@@ -1457,8 +1502,10 @@ a.sb-contact:hover { color: var(--accent-light); }
 }
 
 /* ── Responsive ── */
+.mob-bottom-nav { display: none; }
+
 @media (max-width: 900px) {
-  .root { display: block; }
+  .root { display: block; overflow-x: hidden; }
   .sidebar { display: none; }
 
   .mob-head {
@@ -1468,27 +1515,27 @@ a.sb-contact:hover { color: var(--accent-light); }
     z-index: 50;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    background: rgba(248,250,252,0.85);
+    background: rgba(248,250,252,0.92);
     border-bottom: 1px solid var(--rule);
   }
 
-  .mob-head-inner { padding: 1.25rem 1.25rem 1rem; }
+  .mob-head-inner { padding: 0.85rem 1.25rem 0.75rem; }
 
   .mob-identity {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
-    margin-bottom: 1rem;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
   }
 
   .mob-avatar {
-    width: 48px; height: 48px;
+    width: 40px; height: 40px;
     border-radius: 50%;
     background: linear-gradient(135deg, #0c1222, #1e293b);
     color: var(--accent-light);
     font-family: var(--font-display);
     font-weight: 800;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     display: grid; place-items: center;
     flex-shrink: 0;
     box-shadow: 0 0 0 2px rgba(13,148,136,0.3);
@@ -1496,7 +1543,7 @@ a.sb-contact:hover { color: var(--accent-light); }
 
   .mob-name {
     font-family: var(--font-display);
-    font-size: 1.35rem;
+    font-size: 1.05rem;
     font-weight: 800;
     letter-spacing: -0.02em;
     line-height: 1.15;
@@ -1511,30 +1558,39 @@ a.sb-contact:hover { color: var(--accent-light); }
     background-clip: text;
   }
 
-  .mob-title { font-size: 0.75rem; color: var(--muted); margin: 0.15rem 0 0; font-weight: 500; }
+  .mob-title { font-size: 0.68rem; color: var(--muted); margin: 0.1rem 0 0; font-weight: 500; }
+
+  .mob-cv-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), #0f766e);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
 
   .mob-tabs {
     display: flex;
     gap: 0.35rem;
-    margin-bottom: 0.85rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
   }
 
-  .mob-tabs::-webkit-scrollbar { display: none; }
-
   .mtab {
-    flex-shrink: 0;
-    padding: 0.4rem 0.85rem;
-    font-size: 0.72rem;
+    flex: 1;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.68rem;
     font-weight: 600;
     color: var(--muted);
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: 99px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.25s;
+    text-align: center;
   }
 
   .mtab--on {
@@ -1544,68 +1600,61 @@ a.sb-contact:hover { color: var(--accent-light); }
     box-shadow: 0 4px 12px var(--accent-glow);
   }
 
-  .mob-nav {
+  /* Bottom nav */
+  .mob-bottom-nav {
     display: flex;
-    gap: 0.3rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    padding-bottom: 0.75rem;
-    margin-bottom: 0.75rem;
-    border-bottom: 1px solid var(--rule);
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 50;
+    background: rgba(248,250,252,0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid var(--rule);
+    padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));
   }
 
-  .mob-nav::-webkit-scrollbar { display: none; }
-
-  .mob-nav-btn {
-    flex-shrink: 0;
-    padding: 0.35rem 0.7rem;
-    font-size: 0.68rem;
-    font-weight: 600;
-    color: var(--muted);
+  .mbnav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.3rem 0;
     background: none;
     border: none;
-    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
+  }
+
+  .mbnav-num {
+    font-size: 0.5rem;
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    color: var(--faint);
+  }
+
+  .mbnav-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--muted);
     white-space: nowrap;
   }
 
-  .mob-nav-btn--on {
-    color: var(--accent);
-    background: rgba(13,148,136,0.1);
-  }
+  .mbnav-item--on .mbnav-num,
+  .mbnav-item--on .mbnav-label { color: var(--accent); }
 
-  .mob-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .mbnav-item--on { background: rgba(13,148,136,0.06); border-radius: 8px; }
 
-  .mbn {
-    padding: 0.45rem 1rem;
-    font-size: 0.72rem;
-    font-weight: 600;
-    border-radius: 10px;
-    cursor: pointer;
-    background: linear-gradient(135deg, var(--accent), #0f766e);
-    color: #fff;
-    border: none;
-    box-shadow: 0 4px 12px var(--accent-glow);
-    transition: transform 0.2s;
-  }
-
-  .mbn:active { transform: scale(0.97); }
-  .mbn--o {
-    background: var(--surface);
-    color: var(--muted);
-    border: 1px solid var(--rule);
-    box-shadow: none;
-  }
-  .mbn--d { background: transparent; color: #cbd5e1; border: 1px solid var(--rule); box-shadow: none; }
-
-  .content { padding: 2rem 1.25rem 4rem; }
+  .content { padding: 2rem 1rem 6rem; max-width: 100%; overflow-x: hidden; box-sizing: border-box; margin: 0; }
 
   .timeline-item { grid-template-columns: 24px 1fr; gap: 0.85rem; }
   .timeline-card { padding: 1rem 1.15rem 1.25rem; }
   .skills2 { grid-template-columns: 1fr; }
   .snum { font-size: 4.5rem; top: -0.5rem; }
   .projects { grid-template-columns: 1fr; }
+  .project, .project-inner { min-width: 0; width: 100%; box-sizing: border-box; }
+  .pdesc { overflow-wrap: break-word; word-break: break-word; }
+  .section { min-width: 0; max-width: 100%; }
 }
 
 @media (max-width: 480px) {
