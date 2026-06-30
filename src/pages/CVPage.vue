@@ -8,18 +8,15 @@ const photoOk = ref(true)
 const photoSrc = '/profile.svg'
 
 const person = computed(() => cvStore.person)
-const about = computed(() => cvStore.about)
-const experiences = computed(() => cvStore.experiences)
 const educations = computed(() => cvStore.educations)
-const skillGroups = computed(() => cvStore.skillGroups)
 const softSkills = computed(() => cvStore.softSkills)
 const languages = computed(() => cvStore.languages)
-const projects = computed(() => cvStore.projects)
 
-const headline = computed(() => `${person.value.firstName} ${person.value.lastName}`)
 const initials = computed(() => `${person.value.firstName[0]}${person.value.lastName[0]}`)
 
 const selectedProfile = ref<Profile>('all')
+const activeTitle = computed(() => cvStore.profileTitles[selectedProfile.value])
+const activeAbout = computed(() => cvStore.profileAbouts[selectedProfile.value])
 
 const getFilteredExperiences = (profile: Profile) =>
   cvStore.experiences.filter(e => !e.profiles || e.profiles.includes(profile))
@@ -28,14 +25,35 @@ const getFilteredSkillGroups = (profile: Profile) =>
 const getFilteredProjects = (profile: Profile) =>
   cvStore.projects.filter(p => !p.profiles || p.profiles.includes(profile))
 
-// === Système de code secret pour accéder à l'admin ===
-// Hash SHA-256 du code secret (le code en clair n'est pas stocké)
+const navItems = [
+  { id: 'about', label: 'À propos', num: '01' },
+  { id: 'experience', label: 'Expériences', num: '02' },
+  { id: 'education', label: 'Formations', num: '03' },
+  { id: 'skills', label: 'Compétences', num: '04' },
+  { id: 'projects', label: 'Projets', num: '05' },
+]
+
+const activeSection = ref('about')
+
+const skillColors: Record<string, string> = {
+  amber: '#f59e0b',
+  blue: '#3b82f6',
+  emerald: '#10b981',
+  purple: '#a855f7',
+  slate: '#64748b',
+  red: '#ef4444',
+}
+
+const scrollTo = (id: string) => {
+  activeSection.value = id
+}
+
+// Admin secret
 const SECRET_HASH = '8b55f4ebfbc9859067a18d3dd52e04e3d187f18fc96a943f2b1c9653ad5c8c17'
 const adminUnlocked = ref(sessionStorage.getItem('adminUnlocked') === 'true')
 const typedKeys = ref('')
 let resetTimer: ReturnType<typeof setTimeout> | null = null
 
-// Fonction de hachage SHA-256
 const hashCode = async (text: string): Promise<string> => {
   const encoder = new TextEncoder()
   const data = encoder.encode(text)
@@ -45,21 +63,11 @@ const hashCode = async (text: string): Promise<string> => {
 }
 
 const handleKeyPress = async (e: KeyboardEvent) => {
-  // Ignorer si on est dans un input/textarea
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-  
-  // Ajouter la touche
   typedKeys.value += e.key
-  
-  // Garder les 30 derniers caractères max
-  if (typedKeys.value.length > 30) {
-    typedKeys.value = typedKeys.value.slice(-30)
-  }
-  
-  // Vérifier toutes les sous-chaînes possibles (du plus long au plus court)
+  if (typedKeys.value.length > 30) typedKeys.value = typedKeys.value.slice(-30)
   for (let i = 0; i < typedKeys.value.length; i++) {
-    const substring = typedKeys.value.slice(i)
-    const hash = await hashCode(substring)
+    const hash = await hashCode(typedKeys.value.slice(i))
     if (hash === SECRET_HASH) {
       adminUnlocked.value = true
       sessionStorage.setItem('adminUnlocked', 'true')
@@ -67,12 +75,8 @@ const handleKeyPress = async (e: KeyboardEvent) => {
       return
     }
   }
-  
-  // Reset après 5 secondes d'inactivité
   if (resetTimer) clearTimeout(resetTimer)
-  resetTimer = setTimeout(() => {
-    typedKeys.value = ''
-  }, 5000)
+  resetTimer = setTimeout(() => { typedKeys.value = '' }, 5000)
 }
 
 onMounted(() => {
@@ -83,10 +87,8 @@ onUnmounted(() => {
   window.removeEventListener('keypress', handleKeyPress)
 })
 
-const goToAdmin = () => {
-  router.push('/admin')
-}
 
+const goToAdmin = () => router.push('/admin')
 const logout = () => {
   adminUnlocked.value = false
   sessionStorage.removeItem('adminUnlocked')
@@ -99,7 +101,7 @@ const handlePrintAts = async () => {
     const _projects = getFilteredProjects(selectedProfile.value)
     // @ts-ignore
     const { jsPDF } = await import('jspdf')
-    
+
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
     const pageWidth = 210
     const pageHeight = 297
@@ -109,11 +111,9 @@ const handlePrintAts = async () => {
     let yMain = 18
     let ySide = 18
 
-    // === SIDEBAR GAUCHE ===
     doc.setFillColor(24, 36, 52)
     doc.rect(0, 0, sidebarWidth, pageHeight, 'F')
 
-    // Cercle avec initiales
     doc.setFillColor(45, 60, 80)
     doc.circle(sidebarWidth / 2, 28, 16, 'F')
     doc.setTextColor(255, 255, 255)
@@ -123,7 +123,6 @@ const handlePrintAts = async () => {
 
     ySide = 52
 
-    // --- CONTACT ---
     doc.setFontSize(10)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(100, 180, 255)
@@ -141,7 +140,6 @@ const handlePrintAts = async () => {
     doc.text(addrLines, sideX, ySide)
     ySide += addrLines.length * 4 + 8
 
-    // --- COMPÉTENCES ---
     doc.setFontSize(10)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(100, 180, 255)
@@ -154,7 +152,6 @@ const handlePrintAts = async () => {
       doc.setTextColor(255, 200, 100)
       doc.text(group.label, sideX, ySide)
       ySide += 4
-
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(200, 210, 220)
       doc.setFontSize(8)
@@ -167,7 +164,6 @@ const handlePrintAts = async () => {
 
     ySide += 5
 
-    // --- LANGUES ---
     doc.setFontSize(10)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(100, 180, 255)
@@ -179,19 +175,15 @@ const handlePrintAts = async () => {
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(220, 230, 240)
       doc.text(l.label, sideX, ySide)
-
-      // Afficher le niveau en texte (sans barre de progression)
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(8)
       doc.setTextColor(160, 175, 190)
       doc.text(l.level, sideX + 30, ySide)
-
       ySide += 4
     })
 
     ySide += 5
 
-    // --- SOFT SKILLS ---
     doc.setFontSize(10)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(100, 180, 255)
@@ -206,10 +198,8 @@ const handlePrintAts = async () => {
       ySide += 4
     })
 
-    // === CONTENU PRINCIPAL (DROITE) ===
     const mainWidth = pageWidth - mainX - 12
 
-    // Nom
     doc.setTextColor(24, 36, 52)
     doc.setFontSize(28)
     doc.setFont('helvetica', 'bold')
@@ -218,20 +208,17 @@ const handlePrintAts = async () => {
     doc.text(person.value.lastName, mainX, yMain)
     yMain += 8
 
-    // Titre
     doc.setFontSize(12)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(100, 116, 139)
-    doc.text(person.value.title, mainX, yMain)
+    doc.text(activeTitle.value, mainX, yMain)
     yMain += 6
 
-    // Ligne décorative
     doc.setDrawColor(100, 180, 255)
     doc.setLineWidth(1)
     doc.line(mainX, yMain, mainX + 45, yMain)
     yMain += 10
 
-    // --- PROFIL ---
     doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(24, 36, 52)
@@ -241,11 +228,10 @@ const handlePrintAts = async () => {
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(70, 85, 100)
-    const aboutLinesArr = doc.splitTextToSize(about.value, mainWidth)
+    const aboutLinesArr = doc.splitTextToSize(activeAbout.value, mainWidth)
     doc.text(aboutLinesArr, mainX, yMain)
     yMain += aboutLinesArr.length * 5 + 7
 
-    // --- FORMATIONS ---
     doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(24, 36, 52)
@@ -255,13 +241,11 @@ const handlePrintAts = async () => {
     educations.value.forEach(ed => {
       doc.setFillColor(80, 200, 120)
       doc.circle(mainX + 2, yMain - 1, 1.5, 'F')
-
       doc.setFontSize(10)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(24, 36, 52)
       doc.text(ed.title, mainX + 7, yMain)
       yMain += 4
-
       doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(80, 200, 120)
@@ -273,7 +257,6 @@ const handlePrintAts = async () => {
 
     yMain += 5
 
-    // --- EXPÉRIENCES ---
     doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(24, 36, 52)
@@ -283,13 +266,11 @@ const handlePrintAts = async () => {
     _experiences.forEach(xp => {
       doc.setFillColor(100, 180, 255)
       doc.circle(mainX + 2, yMain - 1, 1.5, 'F')
-
       doc.setFontSize(11)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(24, 36, 52)
       doc.text(xp.role, mainX + 7, yMain)
       yMain += 5
-
       doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(100, 180, 255)
@@ -297,7 +278,6 @@ const handlePrintAts = async () => {
       doc.setTextColor(100, 116, 139)
       doc.text('  |  ' + xp.company, mainX + 7 + doc.getTextWidth(xp.period), yMain)
       yMain += 5
-
       doc.setFontSize(9)
       doc.setTextColor(70, 85, 100)
       xp.details.slice(0, 2).forEach(d => {
@@ -310,7 +290,6 @@ const handlePrintAts = async () => {
 
     yMain += 5
 
-    // --- PROJETS ---
     doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(24, 36, 52)
@@ -320,20 +299,17 @@ const handlePrintAts = async () => {
     _projects.forEach(p => {
       doc.setFillColor(160, 100, 220)
       doc.circle(mainX + 2, yMain - 1, 1.5, 'F')
-
       doc.setFontSize(10)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(24, 36, 52)
       doc.text(p.title, mainX + 7, yMain)
       yMain += 5
-
       doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(70, 85, 100)
       const descLines = doc.splitTextToSize(p.desc, mainWidth - 10)
       doc.text(descLines.slice(0, 1), mainX + 7, yMain)
       yMain += 4
-
       doc.setTextColor(100, 100, 220)
       doc.text(p.link, mainX + 7, yMain)
       yMain += 7
@@ -356,7 +332,6 @@ const handlePrintAts = async () => {
   }
 }
 
-// Version ATS-friendly
 const handleDownloadAts = async () => {
   try {
     const _experiences = getFilteredExperiences(selectedProfile.value)
@@ -364,7 +339,7 @@ const handleDownloadAts = async () => {
     const _projects = getFilteredProjects(selectedProfile.value)
     // @ts-ignore
     const { jsPDF } = await import('jspdf')
-    
+
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
     const marginLeft = 12
     const marginRight = 12
@@ -372,7 +347,6 @@ const handleDownloadAts = async () => {
     const contentWidth = pageWidth - marginLeft - marginRight
     let y = 12
 
-    // Helper pour les titres de section
     const sectionTitle = (title: string) => {
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
@@ -384,7 +358,6 @@ const handleDownloadAts = async () => {
       y += 4
     }
 
-    // === EN-TÊTE ===
     doc.setFontSize(18)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(30, 30, 30)
@@ -394,7 +367,7 @@ const handleDownloadAts = async () => {
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(70, 70, 70)
-    doc.text(person.value.title, pageWidth / 2, y, { align: 'center' })
+    doc.text(activeTitle.value, pageWidth / 2, y, { align: 'center' })
     y += 5
 
     doc.setFontSize(8)
@@ -402,51 +375,41 @@ const handleDownloadAts = async () => {
     doc.text(`${person.value.phone}  |  ${person.value.email}  |  ${person.value.address}`, pageWidth / 2, y, { align: 'center' })
     y += 7
 
-    // === PROFIL ===
     sectionTitle('PROFIL')
     doc.setFontSize(9)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(50, 50, 50)
-    const aboutLinesAts = doc.splitTextToSize(about.value, contentWidth)
+    const aboutLinesAts = doc.splitTextToSize(activeAbout.value, contentWidth)
     doc.text(aboutLinesAts.slice(0, 3), marginLeft, y)
     y += Math.min(aboutLinesAts.length, 3) * 3.5 + 4
 
-    // === FORMATIONS ===
     sectionTitle('FORMATION')
-
     educations.value.forEach(ed => {
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(30, 30, 30)
       doc.text(ed.title, marginLeft, y)
-      
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(100, 100, 100)
       doc.text(ed.period, pageWidth - marginRight, y, { align: 'right' })
       y += 3.5
-
       doc.setFontSize(8)
       doc.setTextColor(70, 70, 70)
       doc.text(ed.school, marginLeft, y)
       y += 4
     })
-
     y += 2
 
-    // === EXPÉRIENCES ===
     sectionTitle('EXPÉRIENCE PROFESSIONNELLE')
-
     _experiences.slice(0, 3).forEach(xp => {
       doc.setFontSize(9)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(30, 30, 30)
       doc.text(xp.role + ' | ' + xp.company, marginLeft, y)
-      
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(100, 100, 100)
       doc.text(xp.period, pageWidth - marginRight, y, { align: 'right' })
       y += 4
-
       doc.setFontSize(8)
       doc.setTextColor(60, 60, 60)
       xp.details.slice(0, 2).forEach(d => {
@@ -456,12 +419,9 @@ const handleDownloadAts = async () => {
       })
       y += 2
     })
-
     y += 1
 
-    // === COMPÉTENCES TECHNIQUES ===
     sectionTitle('COMPÉTENCES TECHNIQUES')
-
     doc.setFontSize(8)
     const allSkills = _skillGroups.map(g => `${g.label}: ${g.items.join(', ')}`).join('  |  ')
     const skillLines = doc.splitTextToSize(allSkills, contentWidth)
@@ -470,30 +430,21 @@ const handleDownloadAts = async () => {
     doc.text(skillLines.slice(0, 3), marginLeft, y)
     y += Math.min(skillLines.length, 3) * 3.5 + 3
 
-    // === SOFT SKILLS & LANGUES ===
     sectionTitle('SOFT SKILLS & LANGUES')
-
     doc.setFontSize(8)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(50, 50, 50)
-    
-    const softText = 'Soft Skills: ' + softSkills.value.map(s => s.label).join(', ')
-    doc.text(softText, marginLeft, y)
+    doc.text('Soft Skills: ' + softSkills.value.map(s => s.label).join(', '), marginLeft, y)
     y += 3.5
-    
-    const langText = 'Langues: ' + languages.value.map(l => `${l.label} (${l.level})`).join(', ')
-    doc.text(langText, marginLeft, y)
+    doc.text('Langues: ' + languages.value.map(l => `${l.label} (${l.level})`).join(', '), marginLeft, y)
     y += 5
 
-    // === PROJETS ===
     sectionTitle('PROJETS')
-
     _projects.slice(0, 2).forEach(p => {
       doc.setFontSize(8)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(30, 30, 30)
       doc.text(p.title + ': ', marginLeft, y)
-      
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(50, 50, 50)
       const titleW = doc.getTextWidth(p.title + ': ')
@@ -521,253 +472,1136 @@ const handleDownloadAts = async () => {
 </script>
 
 <template>
-  <div id="cv-content" class="min-h-screen bg-slate-50 text-slate-900">
-    <header class="relative overflow-hidden bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-      <div class="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,#ffffff44,transparent_40%),radial-gradient(circle_at_80%_0%,#38bdf866,transparent_35%)]" />
-      <div class="max-w-7xl mx-auto px-6 py-16 md:py-20 relative">
-        <div class="flex flex-col md:flex-row items-center md:items-end gap-8">
-          <div class="flex flex-col items-center md:items-start">
-            <div class="relative w-32 h-32 md:w-40 md:h-40 rounded-full ring-4 ring-white/30 shadow-2xl overflow-hidden bg-slate-800">
-              <img
-                v-if="photoOk"
-                :src="photoSrc"
-                alt="Photo"
-                class="w-full h-full object-cover"
-                @error="photoOk = false"
-              />
-              <div v-else class="w-full h-full bg-slate-800 grid place-items-center text-3xl font-bold text-white/80">
-                {{ initials }}
-              </div>
-            </div>
+  <div id="cv-content" class="root">
+
+    <div class="ambient print-hide" aria-hidden="true">
+      <div class="orb orb--1"></div>
+      <div class="orb orb--2"></div>
+      <div class="grain"></div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar print-hide">
+      <div class="sb-glow" aria-hidden="true"></div>
+
+      <div class="sb-top hi hi--0">
+        <div class="sb-avatar-ring">
+          <div class="sb-avatar">
+            <img v-if="photoOk" :src="photoSrc" alt="" @error="photoOk = false" />
+            <span v-else>{{ initials }}</span>
           </div>
-          <div class="flex-1 text-center md:text-left space-y-3">
-            <p class="text-xs uppercase tracking-[0.25em] text-slate-200/80">Curriculum Vitae</p>
-            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white">{{ headline }}</h1>
-            <p class="text-lg md:text-xl text-slate-200 font-semibold">{{ person.title }}</p>
-            <div class="flex flex-wrap justify-center md:justify-start gap-4 pt-3 text-sm text-slate-200/90">
-              <span class="flex items-center gap-2">📞 {{ person.phone }}</span>
-              <span class="flex items-center gap-2">✉️ {{ person.email }}</span>
-              <span class="flex items-center gap-2">📍 {{ person.address }}</span>
-            </div>
-            <div class="flex flex-wrap justify-center md:justify-start gap-3 pt-4 print:hidden">
-              <div class="flex rounded-full overflow-hidden border border-white/30 text-sm font-semibold">
-                <button
-                  v-for="p in PROFILES"
-                  :key="p.key"
-                  type="button"
-                  @click="selectedProfile = p.key"
-                  :class="selectedProfile === p.key ? 'bg-white text-slate-900' : 'text-white hover:bg-white/10'"
-                  class="px-3 py-1.5 transition"
-                >
-                  {{ p.label }}
-                </button>
-              </div>
-              <button
-                type="button"
-                class="px-4 py-2 rounded-full bg-white text-slate-900 font-semibold shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 transition"
-                @click="handlePrintAts"
-              >
-                📄 CV Design (PDF)
-              </button>
-              <button
-                v-if="adminUnlocked"
-                type="button"
-                class="px-4 py-2 rounded-full bg-emerald-500 text-white font-semibold shadow-lg shadow-emerald-900/20 hover:-translate-y-0.5 transition"
-                @click="handleDownloadAts"
-              >
-                🤖 CV Format ATS
-              </button>
-              <button
-                v-if="adminUnlocked"
-                type="button"
-                class="px-4 py-2 rounded-full bg-amber-500 text-white font-semibold shadow-lg shadow-amber-900/20 hover:-translate-y-0.5 transition animate-pulse"
-                @click="goToAdmin"
-              >
-                ⚙️ Modifier
-              </button>
-              <button
-                v-if="adminUnlocked"
-                type="button"
-                class="px-4 py-2 rounded-full bg-red-500/80 text-white font-semibold shadow-lg hover:-translate-y-0.5 transition"
-                @click="logout"
-                title="Cacher le bouton Modifier"
-              >
-                🔒 Verrouiller
-              </button>
-              <a
-                href="#projects"
-                class="px-4 py-2 rounded-full border border-white/50 text-white font-semibold hover:bg-white/10 transition"
-              >
-                Projets
-              </a>
-            </div>
+        </div>
+      </div>
+
+      <div class="sb-identity hi hi--1">
+        <p class="sb-firstname">{{ person.firstName }}</p>
+        <p class="sb-lastname">{{ person.lastName }}</p>
+        <p class="sb-jobtitle">{{ activeTitle }}</p>
+      </div>
+
+      <nav class="sb-nav hi hi--2">
+        <button
+          v-for="item in navItems"
+          :key="item.id"
+          class="sb-link"
+          :class="{ 'sb-link--on': activeSection === item.id }"
+          @click="scrollTo(item.id)"
+        >
+          <span class="sb-link-num">{{ item.num }}</span>
+          {{ item.label }}
+        </button>
+      </nav>
+
+      <div class="sb-contacts hi hi--2">
+        <a :href="`tel:${person.phone.replace(/\s/g, '')}`" class="sb-contact">{{ person.phone }}</a>
+        <a :href="`mailto:${person.email}`" class="sb-contact">{{ person.email }}</a>
+        <span class="sb-contact">{{ person.address }}</span>
+      </div>
+
+      <div class="sb-profiles hi hi--3">
+        <span class="sb-label">Profil CV</span>
+        <div class="sb-tabs">
+          <button
+            v-for="p in PROFILES"
+            :key="p.key"
+            :class="['sb-tab', selectedProfile === p.key && 'sb-tab--on']"
+            @click="selectedProfile = p.key"
+          >{{ p.label }}</button>
+        </div>
+      </div>
+
+      <div class="sb-actions hi hi--3">
+        <button type="button" @click="handlePrintAts" class="sb-btn">
+          <span class="sb-btn-icon">↓</span> CV Design
+        </button>
+        <template v-if="adminUnlocked">
+          <button type="button" @click="handleDownloadAts" class="sb-btn sb-btn--ghost">↓ ATS</button>
+          <button type="button" @click="goToAdmin" class="sb-btn sb-btn--ghost">⚙ Éditer</button>
+          <button type="button" @click="logout" class="sb-btn sb-btn--ghost sb-btn--danger">🔒</button>
+        </template>
+      </div>
+    </aside>
+
+    <!-- MOBILE HEADER -->
+    <header class="mob-head print-hide">
+      <div class="mob-head-inner">
+        <div class="mob-identity">
+          <div class="mob-avatar">{{ initials }}</div>
+          <div>
+            <div class="mob-name">{{ person.firstName }} <em>{{ person.lastName }}</em></div>
+            <p class="mob-title">{{ activeTitle }}</p>
           </div>
+        </div>
+        <div class="mob-tabs">
+          <button
+            v-for="p in PROFILES"
+            :key="p.key"
+            :class="['mtab', selectedProfile === p.key && 'mtab--on']"
+            @click="selectedProfile = p.key"
+          >{{ p.label }}</button>
+        </div>
+        <nav class="mob-nav">
+          <button
+            v-for="item in navItems"
+            :key="item.id"
+            :class="['mob-nav-btn', activeSection === item.id && 'mob-nav-btn--on']"
+            @click="scrollTo(item.id)"
+          >{{ item.label }}</button>
+        </nav>
+        <div class="mob-btns">
+          <button @click="handlePrintAts" class="mbn">↓ CV</button>
+          <template v-if="adminUnlocked">
+            <button @click="handleDownloadAts" class="mbn mbn--o">↓ ATS</button>
+            <button @click="goToAdmin" class="mbn mbn--o">⚙</button>
+            <button @click="logout" class="mbn mbn--d">🔒</button>
+          </template>
         </div>
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-12 md:py-16 space-y-16">
-      <section id="about" class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 p-8 md:p-10">
-        <h2 class="section-title">À propos</h2>
-        <p class="text-lg text-slate-600 leading-relaxed">
-          {{ about }}
-        </p>
-      </section>
+    <!-- CONTENT -->
+    <main class="content">
+      <Transition name="section-fade" mode="out-in">
 
-      <section id="experience" class="space-y-8">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-600 grid place-items-center font-bold">XP</div>
-          <h2 class="text-3xl font-bold text-slate-900">Expériences</h2>
-        </div>
-        <div class="grid gap-6 md:grid-cols-2">
-          <article
-            v-for="xp in experiences"
-            :key="xp.id"
-            class="card"
-          >
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-sm font-semibold text-orange-600">{{ xp.period }}</p>
-                <h3 class="text-xl font-bold text-slate-900">{{ xp.role }}</h3>
-                <p class="text-slate-500 font-semibold">{{ xp.company }}</p>
-              </div>
-              <span class="text-orange-500 text-lg">⦿</span>
+        <section v-if="activeSection === 'about'" key="about" class="section">
+          <div class="section-head">
+            <span class="snum">01</span>
+            <div class="stitle-wrap">
+              <span class="stitle-tag">Introduction</span>
+              <h2 class="stitle">À propos</h2>
             </div>
-            <ul class="mt-3 space-y-2 text-slate-600 text-sm leading-relaxed">
-              <li v-for="(d, j) in xp.details" :key="j" class="flex gap-2">
-                <span class="text-orange-400">•</span>
-                <span>{{ d }}</span>
-              </li>
-            </ul>
-          </article>
-        </div>
-      </section>
+          </div>
+          <Transition name="profile-swap" mode="out-in">
+            <p :key="selectedProfile" class="about">{{ activeAbout }}</p>
+          </Transition>
+        </section>
 
-      <section id="education" class="space-y-8">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 grid place-items-center font-bold">EDU</div>
-          <h2 class="text-3xl font-bold text-slate-900">Formations</h2>
-        </div>
-        <div class="grid gap-6 md:grid-cols-2">
-          <article v-for="ed in educations" :key="ed.id" class="card">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-sm font-semibold text-emerald-600">{{ ed.period }}</p>
-                <h3 class="text-lg font-bold text-slate-900">{{ ed.title }}</h3>
-                <p class="text-slate-500">{{ ed.school }}</p>
-              </div>
-              <span class="text-emerald-500 text-lg">⦿</span>
+        <section v-else-if="activeSection === 'experience'" key="experience" class="section">
+          <div class="section-head">
+            <span class="snum">02</span>
+            <div class="stitle-wrap">
+              <span class="stitle-tag">Parcours</span>
+              <h2 class="stitle">Expériences</h2>
             </div>
-            <p v-if="ed.description" class="mt-3 text-sm text-slate-600 leading-relaxed">
-              {{ ed.description }}
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section id="skills" class="space-y-10 bg-slate-900 text-white rounded-3xl shadow-xl shadow-slate-300/50 p-8 md:p-10">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-white/15 text-white grid place-items-center font-bold">SK</div>
-          <h2 class="text-3xl font-bold">Compétences</h2>
-        </div>
-        <div class="grid gap-8 lg:grid-cols-2">
-          <div class="space-y-6">
+          </div>
+          <div class="timeline">
             <div
-              v-for="group in skillGroups"
-              :key="group.id"
-              class="space-y-3"
+              v-for="(xp, i) in getFilteredExperiences(selectedProfile)"
+              :key="xp.id"
+              class="timeline-item entry"
+              :style="`--d:${i * 0.08}s`"
             >
-              <h3 class="text-lg font-semibold text-white flex items-center gap-2">
-                <span
-                  class="inline-block w-2.5 h-2.5 rounded-full"
-                  :class="{
-                    'bg-orange-400': group.color === 'orange' || group.color === 'amber',
-                    'bg-sky-400': group.color === 'blue',
-                    'bg-emerald-400': group.color === 'emerald',
-                    'bg-purple-400': group.color === 'purple',
-                    'bg-slate-200': group.color === 'slate',
-                    'bg-red-400': group.color === 'red',
-                  }"
-                ></span>
-                {{ group.label }}
-              </h3>
-              <div class="flex flex-wrap gap-2">
-                <span
-                  v-for="(it, j) in group.items"
-                  :key="j"
-                  class="chip chip-dark"
-                  :class="{
-                    'border-orange-300 text-orange-50 bg-orange-400/15': group.color === 'orange' || group.color === 'amber',
-                    'border-sky-300 text-sky-50 bg-sky-400/15': group.color === 'blue',
-                    'border-emerald-300 text-emerald-50 bg-emerald-400/15': group.color === 'emerald',
-                    'border-purple-300 text-purple-50 bg-purple-400/15': group.color === 'purple',
-                    'border-slate-400 text-slate-100 bg-white/10': group.color === 'slate',
-                    'border-red-300 text-red-50 bg-red-400/15': group.color === 'red',
-                  }"
-                >
-                  {{ it }}
-                </span>
+              <div class="timeline-rail">
+                <div class="timeline-dot"></div>
+              </div>
+              <div class="timeline-card">
+                <span class="edate">{{ xp.period }}</span>
+                <h3 class="erole">{{ xp.role }}</h3>
+                <p class="eorg">{{ xp.company }}</p>
+                <ul class="elist">
+                  <li v-for="(d, j) in xp.details" :key="j">{{ d }}</li>
+                </ul>
               </div>
             </div>
           </div>
-          <div class="space-y-6">
-            <div class="card bg-white text-slate-900 border border-slate-100">
-              <h3 class="text-xl font-bold mb-4">Langues</h3>
-              <div class="space-y-4">
-                <div v-for="l in languages" :key="l.id" class="space-y-1">
-                  <div class="flex justify-between text-sm text-slate-700">
-                    <span class="font-semibold">{{ l.label }}</span>
-                    <span class="text-slate-500">{{ l.level }}</span>
+        </section>
+
+        <section v-else-if="activeSection === 'education'" key="education" class="section">
+          <div class="section-head">
+            <span class="snum">03</span>
+            <div class="stitle-wrap">
+              <span class="stitle-tag">Formation</span>
+              <h2 class="stitle">Formations</h2>
+            </div>
+          </div>
+          <div class="timeline">
+            <div
+              v-for="(ed, i) in educations"
+              :key="ed.id"
+              class="timeline-item entry"
+              :style="`--d:${i * 0.08}s`"
+            >
+              <div class="timeline-rail">
+                <div class="timeline-dot timeline-dot--edu"></div>
+              </div>
+              <div class="timeline-card">
+                <span class="edate">{{ ed.period }}</span>
+                <h3 class="erole">{{ ed.title }}</h3>
+                <p class="eorg">{{ ed.school }}</p>
+                <p v-if="ed.description" class="edesc">{{ ed.description }}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section v-else-if="activeSection === 'skills'" key="skills" class="section">
+          <div class="section-head">
+            <span class="snum">04</span>
+            <div class="stitle-wrap">
+              <span class="stitle-tag">Expertise</span>
+              <h2 class="stitle">Compétences</h2>
+            </div>
+          </div>
+          <div class="skills-grid">
+            <div
+              v-for="(group, i) in getFilteredSkillGroups(selectedProfile)"
+              :key="group.id"
+              class="sg"
+              :style="`--d:${i * 0.06}s; --sg-accent: ${skillColors[group.color] || skillColors.slate}`"
+            >
+              <h3 class="sgn">{{ group.label }}</h3>
+              <div class="chips">
+                <span v-for="item in group.items" :key="item" class="chip">{{ item }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="skills2">
+            <div class="sg-card">
+              <h3 class="sgn">Langues</h3>
+              <div class="langs">
+                <div v-for="l in languages" :key="l.id" class="lang">
+                  <div class="lang-top">
+                    <span class="lname">{{ l.label }}</span>
+                    <span class="llvl">{{ l.level }}</span>
                   </div>
-                  <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
-                    <div
-                      class="h-full rounded-full bg-linear-to-r from-sky-400 via-blue-500 to-indigo-500 shadow-[0_0_12px_rgba(59,130,246,0.4)]"
-                      :style="{ width: `${l.value}%` }"
-                    />
+                  <div class="lbar">
+                    <div class="lfill" :style="`--w:${l.value}%`"></div>
                   </div>
                 </div>
               </div>
             </div>
-
-            <!-- Soft Skills -->
-            <div class="card bg-white text-slate-900 border border-slate-100">
-              <h3 class="text-xl font-bold mb-4">Soft Skills</h3>
-              <div class="flex flex-wrap gap-2">
-                <span 
-                  v-for="skill in softSkills" 
-                  :key="skill.id"
-                  class="px-3 py-1.5 rounded-full bg-pink-100 text-pink-700 text-sm font-medium border border-pink-200"
-                >
-                  {{ skill.label }}
-                </span>
+            <div class="sg-card" style="--d:.1s">
+              <h3 class="sgn">Soft Skills</h3>
+              <div class="chips">
+                <span v-for="s in softSkills" :key="s.id" class="chip chip--soft">{{ s.label }}</span>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="projects" class="space-y-8">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 grid place-items-center font-bold">PRJ</div>
-          <h2 class="text-3xl font-bold text-slate-900">Projets</h2>
-        </div>
-        <div class="grid gap-6 md:grid-cols-2">
-          <article v-for="p in projects" :key="p.id" class="card">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <h3 class="text-xl font-bold text-slate-900">{{ p.title }}</h3>
-                <p class="text-slate-600 mt-2">{{ p.desc }}</p>
-                <p class="mt-3 text-sm font-semibold text-indigo-500">
-                  <a :href="`https://${p.link}`" target="_blank">{{ p.link }}</a>
-                </p>
-              </div>
-              <span class="text-purple-500 text-lg">⦿</span>
+        <section v-else-if="activeSection === 'projects'" key="projects" class="section">
+          <div class="section-head">
+            <span class="snum">05</span>
+            <div class="stitle-wrap">
+              <span class="stitle-tag">Portfolio</span>
+              <h2 class="stitle">Projets</h2>
             </div>
-          </article>
-        </div>
-      </section>
+          </div>
+          <div class="projects">
+            <article
+              v-for="(p, i) in getFilteredProjects(selectedProfile)"
+              :key="p.id"
+              class="project"
+              :style="`--d:${i * 0.08}s`"
+            >
+              <div class="project-inner">
+                <h3 class="pname">{{ p.title }}</h3>
+                <p class="pdesc">{{ p.desc }}</p>
+                <a :href="`https://${p.link}`" target="_blank" rel="noopener" class="plink">
+                  <span>{{ p.link }}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg>
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
 
+      </Transition>
     </main>
   </div>
 </template>
 
+<style scoped>
+/* ── Tokens ── */
+.root {
+  --accent: #0d9488;
+  --accent-light: #14b8a6;
+  --accent-glow: rgba(13, 148, 136, 0.35);
+  --warm: #f97316;
+  --text: #0f172a;
+  --muted: #64748b;
+  --faint: #94a3b8;
+  --rule: rgba(15, 23, 42, 0.08);
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --sb-w: 280px;
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+
+  display: grid;
+  grid-template-columns: var(--sb-w) 1fr;
+  min-height: 100vh;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ── Ambient ── */
+.ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+  animation: float 12s ease-in-out infinite;
+}
+
+.orb--1 {
+  width: 480px; height: 480px;
+  background: radial-gradient(circle, rgba(13,148,136,0.25) 0%, transparent 70%);
+  top: -120px; right: 5%;
+}
+
+.orb--2 {
+  width: 360px; height: 360px;
+  background: radial-gradient(circle, rgba(249,115,22,0.12) 0%, transparent 70%);
+  bottom: 10%; right: 20%;
+  animation-delay: -6s;
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -30px) scale(1.05); }
+  66% { transform: translate(-15px, 20px) scale(0.95); }
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 2.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  scrollbar-width: none;
+  z-index: 10;
+  background: linear-gradient(165deg, #0c1222 0%, #131c31 40%, #0f172a 100%);
+  border-right: 1px solid rgba(255,255,255,0.06);
+  color: #e2e8f0;
+}
+
+.sidebar::-webkit-scrollbar { display: none; }
+
+.sb-glow {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 200px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(13,148,136,0.18) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.sb-avatar-ring {
+  position: relative;
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(from 0deg, var(--accent-light), var(--warm), var(--accent-light));
+  animation: spin 8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.sb-avatar {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #1e293b;
+  border: 2px solid #0c1222;
+  display: grid; place-items: center;
+  font-family: var(--font-display);
+  font-size: 1.1rem; font-weight: 800;
+  color: var(--accent-light);
+  animation: spin 8s linear infinite reverse;
+}
+
+.sb-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.sb-identity { line-height: 1.15; position: relative; }
+
+.sb-firstname {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.sb-lastname {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent-light), #5eead4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.sb-jobtitle {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin: 0.55rem 0 0;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+/* Nav */
+.sb-nav { display: flex; flex-direction: column; gap: 0.2rem; }
+
+.sb-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #64748b;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.sb-link-num {
+  font-size: 0.62rem;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+  color: #334155;
+  transition: color 0.25s;
+}
+
+.sb-link:hover {
+  background: rgba(255,255,255,0.05);
+  color: #cbd5e1;
+}
+
+.sb-link--on {
+  background: rgba(13,148,136,0.12);
+  color: #5eead4;
+  box-shadow: inset 3px 0 0 var(--accent-light);
+}
+
+.sb-link--on .sb-link-num { color: var(--accent-light); }
+
+/* Contacts */
+.sb-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 1.25rem;
+}
+
+.sb-contact {
+  font-size: 0.72rem;
+  color: #475569;
+  text-decoration: none;
+  transition: color 0.2s;
+  line-height: 1.4;
+}
+
+a.sb-contact:hover { color: var(--accent-light); }
+
+/* Profiles */
+.sb-label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.sb-tabs { display: flex; flex-direction: column; gap: 0.25rem; }
+
+.sb-tab {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #64748b;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.sb-tab:hover {
+  background: rgba(255,255,255,0.06);
+  color: #94a3b8;
+  border-color: rgba(255,255,255,0.1);
+}
+
+.sb-tab--on {
+  background: rgba(13,148,136,0.15);
+  color: #5eead4;
+  border-color: rgba(13,148,136,0.35);
+  font-weight: 600;
+}
+
+/* Actions */
+.sb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: auto;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 1.25rem;
+}
+
+.sb-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  border-radius: 10px;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--accent), #0f766e);
+  color: #fff;
+  border: none;
+  transition: all 0.25s;
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.sb-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px var(--accent-glow);
+}
+
+.sb-btn-icon { font-size: 0.9rem; }
+
+.sb-btn--ghost {
+  background: rgba(255,255,255,0.04);
+  color: #94a3b8;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: none;
+}
+
+.sb-btn--ghost:hover {
+  background: rgba(255,255,255,0.08);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+
+.sb-btn--danger:hover { color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+
+/* ── MOBILE HEADER ── */
+.mob-head { display: none; }
+
+/* ── CONTENT ── */
+.content {
+  grid-column: 2;
+  padding: 4rem 4.5rem 6rem;
+  position: relative;
+  z-index: 1;
+  max-width: 920px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ── Sections ── */
+.section { margin-bottom: 5rem; }
+
+.section-head {
+  position: relative;
+  margin-bottom: 2.5rem;
+}
+
+.snum {
+  position: absolute;
+  right: 0; top: -1.5rem;
+  font-family: var(--font-display);
+  font-size: 7rem;
+  font-weight: 800;
+  background: linear-gradient(180deg, rgba(15,23,42,0.06) 0%, transparent 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  user-select: none;
+  pointer-events: none;
+}
+
+.stitle-wrap { position: relative; z-index: 1; }
+
+.stitle-tag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+}
+
+.stitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+/* About */
+.about {
+  font-size: 1.02rem;
+  line-height: 1.85;
+  color: var(--muted);
+  max-width: 640px;
+  margin: 0;
+  padding: 1.75rem 2rem;
+  background: var(--surface);
+  border-radius: 16px;
+  border: 1px solid var(--rule);
+  box-shadow: 0 4px 24px rgba(15,23,42,0.04);
+}
+
+/* ── Timeline ── */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 1.25rem;
+  position: relative;
+}
+
+.timeline-item:not(:last-child) .timeline-rail::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: calc(100% + 1rem);
+  background: linear-gradient(180deg, var(--accent-light) 0%, var(--rule) 100%);
+}
+
+.timeline-rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 1.5rem;
+}
+
+.timeline-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(13,148,136,0.15), 0 0 12px var(--accent-glow);
+  flex-shrink: 0;
+  z-index: 1;
+  transition: transform 0.3s;
+}
+
+.timeline-item:hover .timeline-dot { transform: scale(1.3); }
+
+.timeline-dot--edu { background: var(--warm); box-shadow: 0 0 0 4px rgba(249,115,22,0.15); }
+
+.timeline-card {
+  padding: 1.25rem 1.5rem 1.75rem;
+  margin-bottom: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.timeline-item:hover .timeline-card {
+  border-color: rgba(13,148,136,0.2);
+  box-shadow: 0 8px 32px rgba(15,23,42,0.06);
+  transform: translateX(4px);
+}
+
+.edate {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(13,148,136,0.08);
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  margin-bottom: 0.65rem;
+}
+
+.erole {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.eorg {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0.2rem 0 0.75rem;
+  font-weight: 500;
+}
+
+.elist {
+  margin: 0; padding: 0; list-style: none;
+  display: flex; flex-direction: column; gap: 0.35rem;
+}
+
+.elist li {
+  font-size: 0.84rem;
+  color: #475569;
+  line-height: 1.65;
+  padding-left: 1.1rem;
+  position: relative;
+}
+
+.elist li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0.55em;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent-light);
+}
+
+.edesc { font-size: 0.84rem; color: var(--muted); line-height: 1.7; margin: 0.5rem 0 0; }
+
+/* ── Skills ── */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.sg {
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  border-top: 3px solid var(--sg-accent, var(--accent));
+  transition: all 0.3s;
+}
+
+.sg:hover {
+  box-shadow: 0 8px 28px rgba(15,23,42,0.07);
+  transform: translateY(-3px);
+}
+
+.sgn {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text);
+  margin: 0 0 0.75rem;
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+.chip {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #475569;
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 0.25rem 0.55rem;
+  cursor: default;
+  transition: all 0.2s;
+}
+
+.chip:hover {
+  background: rgba(13,148,136,0.08);
+  color: var(--accent);
+  border-color: rgba(13,148,136,0.2);
+}
+
+.chip--soft {
+  background: transparent;
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.skills2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.sg-card {
+  padding: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+}
+
+/* Langs */
+.langs { display: flex; flex-direction: column; gap: 1rem; }
+
+.lang-top { display: flex; justify-content: space-between; margin-bottom: 0.45rem; }
+
+.lname { font-size: 0.84rem; font-weight: 600; color: var(--text); }
+.llvl { font-size: 0.68rem; color: var(--faint); font-weight: 500; }
+
+.lbar {
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.lfill {
+  height: 100%;
+  width: var(--w);
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  border-radius: 99px;
+  animation: fillBar 1.1s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: 0.35s;
+}
+
+/* ── Projects ── */
+.projects {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.project {
+  position: relative;
+  border-radius: 16px;
+  padding: 2px;
+  background: linear-gradient(135deg, transparent, transparent);
+  transition: background 0.4s;
+}
+
+.project:hover {
+  background: linear-gradient(135deg, var(--accent-light), var(--warm));
+}
+
+.project-inner {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 1.75rem;
+  height: 100%;
+  border: 1px solid var(--rule);
+  transition: all 0.3s;
+}
+
+.project:hover .project-inner {
+  border-color: transparent;
+  box-shadow: 0 12px 40px rgba(15,23,42,0.08);
+}
+
+.pname {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.01em;
+  transition: color 0.2s;
+}
+
+.project:hover .pname { color: var(--accent); }
+
+.pdesc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.65;
+  margin: 0.5rem 0 1.25rem;
+}
+
+.plink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  transition: gap 0.2s;
+}
+
+.plink:hover { gap: 0.55rem; }
+
+.plink svg { transition: transform 0.2s; }
+.plink:hover svg { transform: translate(2px, -2px); }
+
+/* ── Transitions ── */
+.section-fade-enter-active,
+.section-fade-leave-active { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.section-fade-enter-from { opacity: 0; transform: translateY(14px); }
+.section-fade-leave-to { opacity: 0; transform: translateY(-8px); }
+
+.profile-swap-enter-active,
+.profile-swap-leave-active { transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+.profile-swap-enter-from { opacity: 0; transform: translateY(12px); }
+.profile-swap-leave-to { opacity: 0; transform: translateY(-8px); }
+
+.list-fade-enter-active { transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+.list-fade-enter-from { opacity: 0; transform: translateY(12px); }
+.list-fade-leave-active { display: none; }
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.hi {
+  opacity: 0;
+  animation: fadeUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.hi--0 { animation-delay: 0.05s; }
+.hi--1 { animation-delay: 0.15s; }
+.hi--2 { animation-delay: 0.25s; }
+.hi--3 { animation-delay: 0.35s; }
+
+@keyframes fillBar {
+  from { width: 0; }
+  to   { width: var(--w); }
+}
+
+.section-head,
+.about,
+.timeline-item,
+.sg,
+.sg-card,
+.project {
+  animation: fadeUp 0.55s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: var(--d, 0s);
+}
+
+/* ── Print ── */
+@media print {
+  .print-hide { display: none !important; }
+  .root { display: block; background: #fff; }
+  .content { padding: 2rem; max-width: none; }
+  .reveal, .hi { opacity: 1 !important; transform: none !important; }
+  .timeline-card, .about, .sg, .sg-card, .project-inner {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+  .lfill { width: var(--w) !important; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .root { display: block; }
+  .sidebar { display: none; }
+
+  .mob-head {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: rgba(248,250,252,0.85);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .mob-head-inner { padding: 1.25rem 1.25rem 1rem; }
+
+  .mob-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .mob-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0c1222, #1e293b);
+    color: var(--accent-light);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.9rem;
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(13,148,136,0.3);
+  }
+
+  .mob-name {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--text);
+  }
+
+  .mob-name em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .mob-title { font-size: 0.75rem; color: var(--muted); margin: 0.15rem 0 0; font-weight: 500; }
+
+  .mob-tabs {
+    display: flex;
+    gap: 0.35rem;
+    margin-bottom: 0.85rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mob-tabs::-webkit-scrollbar { display: none; }
+
+  .mtab {
+    flex-shrink: 0;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 99px;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .mtab--on {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
+
+  .mob-nav {
+    display: flex;
+    gap: 0.3rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .mob-nav::-webkit-scrollbar { display: none; }
+
+  .mob-nav-btn {
+    flex-shrink: 0;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .mob-nav-btn--on {
+    color: var(--accent);
+    background: rgba(13,148,136,0.1);
+  }
+
+  .mob-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+  .mbn {
+    padding: 0.45rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), #0f766e);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px var(--accent-glow);
+    transition: transform 0.2s;
+  }
+
+  .mbn:active { transform: scale(0.97); }
+  .mbn--o {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--rule);
+    box-shadow: none;
+  }
+  .mbn--d { background: transparent; color: #cbd5e1; border: 1px solid var(--rule); box-shadow: none; }
+
+  .content { padding: 2rem 1.25rem 4rem; }
+
+  .timeline-item { grid-template-columns: 24px 1fr; gap: 0.85rem; }
+  .timeline-card { padding: 1rem 1.15rem 1.25rem; }
+  .skills2 { grid-template-columns: 1fr; }
+  .snum { font-size: 4.5rem; top: -0.5rem; }
+  .projects { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+  .content { padding: 1.5rem 1rem 3rem; }
+  .about { padding: 1.25rem; }
+  .stitle { font-size: 1.4rem; }
+}
+</style>

@@ -71,6 +71,8 @@ export interface CVData {
   softSkills: SoftSkill[]
   languages: Language[]
   projects: Project[]
+  profileTitles: Record<Profile, string>
+  profileAbouts: Record<Profile, string>
 }
 
 const defaultData: CVData = {
@@ -171,6 +173,16 @@ const defaultData: CVData = {
       profiles: ['all'],
     },
   ],
+  profileTitles: {
+    all: 'Data Engineer | Développeur Full-Stack',
+    fullstack: 'Développeur Full-Stack',
+    dataEngineer: 'Data Engineer',
+  },
+  profileAbouts: {
+    all: `Data Engineer et développeur full stack passionné avec une solide expérience en développement web et app. Maîtrise des technologies modernes comme Vue, React, Angular côté front-end et C#/.NET, Node.js côté back-end. Capacité à travailler en équipe et à m'adapter rapidement aux nouvelles technologies.`,
+    fullstack: `Développeur Full-Stack avec une expérience confirmée en conception d'applications web modernes. Maîtrise de Vue, React, Angular côté front-end et C#/.NET, Node.js côté back-end. À l'aise dans tout le cycle de développement, du design au déploiement.`,
+    dataEngineer: `Data Engineer spécialisé dans la conception de pipelines ETL/ELT, l'intégration et la transformation des données. Maîtrise de Microsoft Fabric, Apache Spark, Python, SQL et Power BI, avec une expérience de la mise en œuvre d'architectures Lakehouse (Bronze/Silver/Gold), de la modélisation de données et du développement d'APIs de traitement.`,
+  },
 }
 
 // Charger depuis localStorage ou utiliser les données par défaut
@@ -200,6 +212,16 @@ const loadData = (): CVData => {
           ...p,
           profiles: p.profiles || (['fullstack', 'dataEngineer', 'all'] as Profile[]),
         })),
+        profileTitles: parsed.profileTitles || {
+          all: parsed.person?.title || defaultData.person.title,
+          fullstack: parsed.person?.title || defaultData.person.title,
+          dataEngineer: 'Data Engineer',
+        },
+        profileAbouts: parsed.profileAbouts || {
+          all: parsed.about || defaultData.about,
+          fullstack: parsed.about || defaultData.about,
+          dataEngineer: defaultData.profileAbouts.dataEngineer,
+        },
       }
     } catch {
       return defaultData

@@ -42,3 +42,19 @@ Global utilities (`.card`, `.chip`, `.chip-dark`, `.section-title`) are defined 
 ### Skill group colors
 
 Valid `SkillGroup.color` values used in template class-binding: `amber`, `blue`, `emerald`, `purple`, `slate`, `red`.
+
+### Instruction pour claude
+- Tiens-toi strictement à ce que je demande, rien de plus.
+- Respecte ma demande littéralement. Ne fais aucune supposition.
+- Ne propose pas d'étapes, de suggestions ou d'améliorations non sollicitées.
+- Ne crée, ne modifie, ne renomme, ne supprime aucun fichier, document, artifact, canvas ou partie du projet sans demande explicite.
+- Pas de récap ni de conclusion.
+- Pas de disclaimer ("N'hésite pas si besoin", "Je peux aussi...", etc.).
+- Réponds avec le minimum de mots nécessaire.
+- Si la réponse tient en 3 phrases, ne fais pas 3 paragraphes.
+- Si je réponds uniquement "oui", "ok", "continue" ou "vas-y", exécute simplement la suite.
+- En cas d'ambiguïté, pose une seule question.
+
+## Priorité
+
+En cas de conflit entre ces règles, respecte toujours la demande de l'utilisateur de la manière la plus littérale possible.

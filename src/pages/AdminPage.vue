@@ -335,9 +335,31 @@ const exitAdminToHome = () => {
             </div>
           </div>
 
+          <div class="space-y-4">
+            <label class="block text-sm font-medium text-slate-700">À propos par profil CV</label>
+            <div v-for="p in PROFILES" :key="p.key" class="space-y-1">
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide">{{ p.label }}</label>
+              <textarea
+                v-model="cvStore.profileAbouts[p.key]"
+                rows="3"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              ></textarea>
+            </div>
+          </div>
+
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">À propos / Profil</label>
-            <textarea v-model="cvStore.about" rows="4" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Titre par profil CV</label>
+            <div class="space-y-2">
+              <div v-for="p in PROFILES" :key="p.key" class="flex items-center gap-3">
+                <span class="w-28 text-sm text-slate-500 shrink-0">{{ p.label }}</span>
+                <input
+                  v-model="cvStore.profileTitles[p.key]"
+                  type="text"
+                  class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  :placeholder="`Titre pour le profil ${p.label}`"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -653,11 +675,6 @@ const exitAdminToHome = () => {
         </div>
 
       </div>
-
-      <!-- Footer info -->
-      <p class="text-center text-slate-500 text-sm mt-6">
-        💾 Les modifications sont sauvegardées automatiquement dans le navigateur
-      </p>
     </div>
   </div>
 </template>
